@@ -1,16 +1,20 @@
-# Strandbeest Inverse Design
+# Conditional Generative Design of Strandbeest Linkages
 
-Conditional generative pipeline for inverse design of Strandbeest-style planar linkages.
+Conditional generative pipeline for inverse design of Strandbeest-style planar linkages with a kinematics-based evaluator.
 
-Given a **target gait-property vector** (step length, foot clearance, duty factor, smoothness), a conditional VAE (cVAE) proposes feasible 11-parameter linkage configurations. Candidates are evaluated with an analytical forward kinematics solver and optionally post-selected by minimum target error.
+Given a **target gait-property vector** — step length, foot clearance, duty factor, and smoothness — a conditional VAE (cVAE) proposes feasible 11-parameter linkage configurations. Candidates are evaluated by an analytical forward kinematics solver and optionally post-selected by minimum target error.
 
 ---
 
 ## Linkage Parameterization
 
-The design space follows the canonical Jansen 11-bar linkage. Each configuration is fully described by 11 link lengths $(a$–$l$, excluding $l)$, with a fixed crank pivot and a fixed support ground link.
+The design space follows the canonical Theo Jansen 11-bar linkage. The 11 actively optimized link lengths are:
 
-![Canonical 11-element Jansen reference linkage](docs/jansen_11_schematic.png)
+$$\mathbf{x}_{11} = [m,\, b,\, c,\, d,\, e,\, f,\, g,\, h,\, i,\, j,\, k] \in \mathbb{R}^{11}$$
+
+The ground support geometry $(a, l)$ is held fixed to prevent kinematic drift.
+
+![Canonical Jansen reference linkage — optimized parameters are m, b–k; support offsets a, l are fixed](docs/jansen_11_schematic.png)
 
 ---
 
@@ -33,11 +37,11 @@ Outputs (model weights, figures, tables) are written to `runs/default/`.
 ```
 src/strandbeest/
   reference.py     – canonical 11-parameter Jansen linkage definition
-  kinematics.py    – forward kinematics and gait metric computation
-  data.py          – dataset generation and query sampling
-  models.py        – cVAE and conditional MLP (training + inference)
-  baselines.py     – random search and evolutionary search
-  evaluation.py    – per-query metrics (Success@ε, error, violation rate)
+  kinematics.py    – forward kinematics and gait metric computation (T=360 crank angles)
+  data.py          – dataset generation (N=6000 feasible samples) and query sampling
+  models.py        – cVAE (latent dim k=12) and conditional MLP (training + inference)
+  baselines.py     – random search and evolutionary search (budget B=128)
+  evaluation.py    – per-query metrics: Success@ε, standardized L2 error, violation rate
   pipeline.py      – end-to-end experiment orchestration
 scripts/
   run_full_pipeline.py         – main reproducible entrypoint
@@ -49,18 +53,26 @@ tests/                         – smoke tests for kinematics solver
 
 ## Methods
 
+All methods are budget-matched to **B = 128** kinematics evaluator calls per query.
+
 | Method | Description |
 |--------|-------------|
-| **cVAE + post-select** | Sample K=128 latent candidates, evaluate all, return best |
-| **cVAE one-shot** | Single latent sample, no evaluator calls |
-| **Conditional MLP** | Deterministic regressor, perturbed at inference |
-| **Evolutionary search** | Population-based, capped at B=128 evaluator calls |
-| **Random search** | Uniform sampling baseline, B=128 candidates |
+| **cVAE + post-select** (ours) | Sample K=128 latent candidates, evaluate all, return best |
+| **cVAE one-shot** (ours) | Single latent sample, no post-selection (1 evaluator call) |
+| **Conditional MLP** | Deterministic regressor with MSE training, perturbed at inference |
+| **Evolutionary search** | Population size 40, top-35% elites, 10% mutation noise |
+| **Random search** | Uniform sampling baseline |
+
+---
+
+## Main Results
+
+Under a fixed evaluation budget of **B = 128** kinematics evaluator calls per query, cVAE with post-selection achieves **99.2% Success@ε** (ε = 1.0) on in-distribution targets, outperforming budget-matched evolutionary search, random search, and the conditional MLP regressor.
 
 ---
 
 ## Qualitative Results
 
-Foot-tip trajectories produced by each method across three representative target queries. Each column corresponds to a method; each row is a different query. The cVAE + post-select approach (column 4) consistently yields smooth, closed-loop trajectories that match the target gait profile.
+Representative foot-tip trajectories produced by each method across three ID target queries. The cVAE + post-select approach (column 4) consistently yields smooth, closed-loop trajectories that best match the target gait profile.
 
-![Foot-trajectory comparison panel across methods and queries](docs/trajectory_panel.png)
+![Foot-trajectory comparison panel — baselines vs. cVAE-generated designs across three ID target queries](docs/trajectory_panel.png)
