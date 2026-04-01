@@ -10,7 +10,7 @@ Given a **target gait-property vector** (step length, foot clearance, duty facto
 
 The design space follows the canonical Jansen 11-bar linkage. Each configuration is fully described by 11 link lengths $(a$–$l$, excluding $l)$, with a fixed crank pivot and a fixed support ground link.
 
-![Canonical 11-element Jansen reference linkage](docs/reference_schematic.png)
+![Canonical 11-element Jansen reference linkage](docs/jansen_11_schematic.png)
 
 ---
 
