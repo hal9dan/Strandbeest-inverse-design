@@ -10,7 +10,7 @@ Given a **target gait-property vector** (step length, foot clearance, duty facto
 
 The design space follows the canonical Jansen 11-bar linkage. Each configuration is fully described by 11 link lengths $(a$–$l$, excluding $l)$, with a fixed crank pivot and a fixed support ground link.
 
-![Canonical 11-element Jansen reference linkage](reference_schematic.png)
+![Canonical 11-element Jansen reference linkage](docs/reference_schematic.png)
 
 ---
 
@@ -63,4 +63,4 @@ tests/                         – smoke tests for kinematics solver
 
 Foot-tip trajectories produced by each method across three representative target queries. Each column corresponds to a method; each row is a different query. The cVAE + post-select approach (column 4) consistently yields smooth, closed-loop trajectories that match the target gait profile.
 
-![Foot-trajectory comparison panel across methods and queries](trajectory_panel.png)
+![Foot-trajectory comparison panel across methods and queries](docs/trajectory_panel.png)
